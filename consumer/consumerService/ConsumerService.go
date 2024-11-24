@@ -2,7 +2,6 @@ package consumerService
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -24,23 +23,26 @@ func StartConsuming(ctx context.Context, client sarama.ConsumerGroup, topics []s
 	go func() {
 		defer wg.Done()
 
+		// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+		go func() {
+			<-signals
+			cancel()
+		}()
+
 		for {
 			err := client.Consume(ctx, topics, &ConsumerService{})
 			if err != nil {
 				log.Printf("consume error: %v", err)
 			}
 
-			select {
-			case <-signals:
-				cancel()
+			// check if the context was cancelled, signaling that the consumer should stop
+			if ctx.Err() != nil {
 				return
-			default:
 			}
 		}
 	}()
 
 	wg.Wait()
-
 }
 
 func (h *ConsumerService) Setup(sarama.ConsumerGroupSession) error {
@@ -53,13 +55,13 @@ func (h *ConsumerService) Cleanup(sarama.ConsumerGroupSession) error {
 
 func (h *ConsumerService) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		h.eventProcessing(msg)
-		sess.MarkMessage(msg, "")
-		sess.Commit()
+		err := h.eventProcessing(msg)
+		if err == nil {
+			sess.MarkMessage(msg, "")
+			sess.Commit()
+		} else {
+			log.Printf("consume error: %v", err)
+		}
 	}
 	return nil
-}
-
-func (h *ConsumerService) eventProcessing(msg *sarama.ConsumerMessage) {
-	fmt.Println(string(msg.Value))
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	consumerService "SimpleKafkaConsumer/ConsumerService"
+	"SimpleKafkaConsumer/consumerService"
 	"SimpleKafkaConsumer/EnvFactory"
 	"SimpleKafkaConsumer/event"
 	"context"
@@ -17,14 +17,14 @@ func init() {
 func main() {
 
 	config := sarama.NewConfig()
-	config.Version = sarama.V2_1_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 	config.Consumer.Offsets.AutoCommit.Enable = false
 
 	brokers := []string{"localhost:9092"}
+	groupId := "55555"
 	topic := (&event.UserRegistered{}).GetTopic()
 
-	client, err := sarama.NewConsumerGroup(brokers, topic, config)
+	client, err := sarama.NewConsumerGroup(brokers, groupId, config)
 	if err != nil {
 		log.Fatalf("unable to create kafka consumer group: %v", err)
 	}
