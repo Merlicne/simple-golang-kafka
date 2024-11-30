@@ -6,6 +6,7 @@ import (
 	"SimpleKafkaProducer/producerService/producerImplementation"
 	"context"
 	"log"
+	"strings"
 
 	"github.com/IBM/sarama"
 )
@@ -22,16 +23,16 @@ func main() {
     config.Producer.RequiredAcks = sarama.WaitForLocal
     config.Producer.Return.Errors = true
 
-	brokers := []string{EnvFactory.GetStringValue("kafka.bootstrap_servers")}
+	brokers := EnvFactory.GetListValue("kafka.brokers")
 
-	log.Println("Connecting to Kafka..." + brokers[0])
+	log.Println("Connecting to Kafka..." + strings.Join(brokers, ","))
 	
 	producer, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Connected to Kafka..." + brokers[0])
+	log.Println("Connected to Kafka..." + strings.Join(brokers, ","))
 	
 	data := event.UserRegistered{
 		Email: "john@doe.com",
@@ -54,7 +55,7 @@ func main() {
 		if err := producer.Close(); err != nil {
 			log.Fatal(err)
 		}
-		log.Fatal("Producer closed")
+		log.Println("Producer closed")
 	}()
 
 

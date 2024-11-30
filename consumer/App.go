@@ -20,7 +20,7 @@ func main() {
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 	config.Consumer.Offsets.AutoCommit.Enable = false
 
-	brokers := []string{"localhost:9092"}
+	brokers := EnvFactory.GetListValue("kafka.brokers")
 	groupId := "55555"
 	topic := (&event.UserRegistered{}).GetTopic()
 
@@ -39,7 +39,7 @@ func main() {
 		if err := client.Close(); err != nil {
 			log.Fatal(err)
 		}
-		log.Fatal("Client closed")
+		log.Println("Client closed")
 	}()
 
 }

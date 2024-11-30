@@ -27,3 +27,8 @@ func GetStringValue(key string) string {
 func SetStringValue(key string, value string) {
 	envReader.Set(key, value)
 }
+
+func GetListValue(key string) []string {
+	result := envReader.GetStringSlice(key)
+	return result
+}
